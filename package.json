@@ -3,6 +3,14 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "./dist/neuto.umd.cjs",
+  "module": "./dist/neuto.js",
+  "exports": {
+    ".": {
+      "import": "./dist/neuto.js",
+      "require": "./dist/neuto.umd.cjs"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
