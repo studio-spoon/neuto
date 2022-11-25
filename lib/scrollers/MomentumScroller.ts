@@ -63,7 +63,9 @@ export class MomentumScroller
   private createResizeObserver(): ResizeObserver {
     return new ResizeObserver((entries) => {
       entries.forEach((entry) => {
-        document.body.style.height = `${entry.contentRect.height}px`;
+        const { top, height } = entry.target.getBoundingClientRect();
+        const offsetY = this.scrollY + top;
+        document.body.style.height = `${Math.ceil(offsetY + height)}px`;
       });
     });
   }
