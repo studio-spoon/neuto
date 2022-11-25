@@ -1,5 +1,5 @@
 import { easeOutCubic } from '../eases';
-import { findContainerElement, lerp } from '../utils';
+import { debounce, findContainerElement, lerp } from '../utils';
 import {
   animateScrolling,
   Scroller,
@@ -13,7 +13,7 @@ export type MomentumScrollerOptions = {
   wrapper?: Element | string | null;
   content?: Element | string | null;
   lerpIntencity?: number;
-  disableAutoUpdateLayout?: boolean;
+  autoUpdateLayoutDebounceWait?: number;
 };
 
 export class MomentumScroller
@@ -35,7 +35,7 @@ export class MomentumScroller
     wrapper = document.querySelector('.neuto-wrapper'),
     content = document.querySelector('.neuto-content'),
     lerpIntencity = 0.1,
-    disableAutoUpdateLayout = false,
+    autoUpdateLayoutDebounceWait = 200,
   }: MomentumScrollerOptions = {}) {
     super();
 
@@ -43,9 +43,7 @@ export class MomentumScroller
     this.wrapper = findContainerElement(wrapper);
     this.content = findContainerElement(content);
     this.init();
-    if (!disableAutoUpdateLayout) {
-      this.initAutoUpdateLayout();
-    }
+    this.initAutoUpdateLayout(autoUpdateLayoutDebounceWait);
   }
 
   private init() {
@@ -62,14 +60,16 @@ export class MomentumScroller
     window.addEventListener('scroll', this.handleScroll);
   }
 
-  private initAutoUpdateLayout() {
-    this.resizeObserver = new ResizeObserver((entries) => {
-      entries.forEach((entry) => {
-        const { top, height } = entry.target.getBoundingClientRect();
-        const offsetY = this.scrollY + top;
-        document.body.style.height = `${Math.ceil(offsetY + height)}px`;
-      });
-    });
+  private initAutoUpdateLayout(debounceWait: number) {
+    this.resizeObserver = new ResizeObserver(
+      debounce((entries) => {
+        entries.forEach((entry) => {
+          const { top, height } = entry.target.getBoundingClientRect();
+          const offsetY = this.scrollY + top;
+          document.body.style.height = `${offsetY + height}px`;
+        });
+      }, debounceWait),
+    );
     this.resizeObserver.observe(this.content);
   }
 
