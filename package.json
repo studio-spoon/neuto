@@ -15,8 +15,8 @@
   },
   "types": "./types/main.d.ts",
   "files": [
-    "./dist",
-    "./types"
+    "dist",
+    "types"
   ],
   "scripts": {
     "dev": "vite",
