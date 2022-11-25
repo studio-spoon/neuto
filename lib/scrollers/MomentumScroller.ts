@@ -1,0 +1,168 @@
+import { easeOutCubic } from '../eases';
+import { findContainerElement, lerp } from '../utils';
+import { animateScrolling, Scroller, ScrollerEventTarget, ScrollToOptions } from './Scroller';
+
+const delta60 = 16;
+
+export type Adaptor = (momentumScroller: MomentumScroller) => (() => void) | void;
+
+export type MomentumScrollerOptions = {
+  wrapper?: Element | string | null;
+  content?: Element | string | null;
+  adaptor?: Adaptor;
+  lerpIntencity?: number;
+};
+
+export class MomentumScroller extends (EventTarget as ScrollerEventTarget) implements Scroller {
+  public scrollY = window.scrollY;
+  private nativeScrollY = window.scrollY;
+  private tickerRafId?: number;
+  public elapsed = 0;
+  public delta = delta60;
+  private resizeObserver?: ResizeObserver;
+  public readonly wrapper: HTMLElement;
+  public readonly content: HTMLElement;
+  public isPaused = false;
+  private cleanupFn?: (() => void) | void;
+  private lerpIntencity: number;
+
+  constructor({
+    wrapper = document.querySelector('.neuto-wrapper'),
+    content = document.querySelector('.neuto-content'),
+    lerpIntencity = 0.1,
+    adaptor,
+  }: MomentumScrollerOptions = {}) {
+    super();
+
+    this.lerpIntencity = lerpIntencity;
+    this.wrapper = findContainerElement(wrapper);
+    this.content = findContainerElement(content);
+    this.init();
+    this.cleanupFn = adaptor?.(this);
+  }
+
+  private init() {
+    Object.assign(this.wrapper.style, {
+      position: 'fixed',
+      width: '100%',
+      height: '100%',
+      top: 0,
+      left: 0,
+    });
+
+    this.resizeObserver = this.createResizeObserver();
+    this.resizeObserver.observe(this.content);
+
+    this.tick(this.elapsed);
+    window.addEventListener('focusin', this.handleFocusIn);
+    window.addEventListener('scroll', this.handleScroll);
+  }
+
+  private createResizeObserver(): ResizeObserver {
+    return new ResizeObserver((entries) => {
+      entries.forEach((entry) => {
+        document.body.style.height = `${entry.contentRect.height}px`;
+      });
+    });
+  }
+
+  private handleScroll = () => {
+    if (this.isPaused) {
+      window.scrollTo({
+        top: this.nativeScrollY,
+      });
+      return;
+    }
+
+    this.nativeScrollY = window.scrollY;
+  };
+
+  private handleFocusIn = (e: FocusEvent) => {
+    const hasFocusVisible = !!document.querySelector(':focus-visible');
+    if (!hasFocusVisible) {
+      return;
+    }
+    const { target } = e;
+    if (target instanceof HTMLElement) {
+      const { top, bottom } = target.getBoundingClientRect();
+      const isInView = top >= 0 && bottom <= window.innerHeight;
+      if (isInView) return;
+
+      this.scrollTo(this.scrollY + top);
+    }
+  };
+
+  private tick(time: number) {
+    this.delta = time - this.elapsed || delta60;
+    this.elapsed = time;
+
+    const oldScrollY = this.scrollY;
+    const ratio = 1 - Math.pow(1 - this.lerpIntencity, this.delta / delta60);
+    this.scrollY = Math.floor(lerp(this.scrollY, this.nativeScrollY, ratio) * 100) / 100;
+
+    if (Math.abs(this.scrollY - this.nativeScrollY) < 0.5) {
+      this.scrollY = this.nativeScrollY;
+    }
+
+    if (oldScrollY !== this.scrollY) {
+      this.translate(this.scrollY);
+    }
+
+    this.tickerRafId = requestAnimationFrame((time) => {
+      this.tick(time);
+    });
+  }
+
+  private translate(value: number) {
+    this.content.style.translate = `0 -${value}px`;
+    this.dispatchEvent(new CustomEvent('scroll', { detail: value }));
+  }
+
+  public scrollTo(value: number): number;
+  public scrollTo(value: number, options?: ScrollToOptions): Promise<void>;
+  public scrollTo(value: number, { duration = 0, ease = easeOutCubic }: ScrollToOptions = {}) {
+    const destination = Math.max(value, 0);
+    if (duration === 0) {
+      window.scrollTo({
+        top: destination,
+      });
+      if (this.scrollY !== destination) {
+        this.scrollY = destination;
+        this.translate(destination);
+      }
+      return destination;
+    }
+
+    const from = this.scrollY;
+    const delta = destination - from;
+    return animateScrolling({
+      onProgress: (progress) => {
+        this.scrollTo(from + delta * progress);
+      },
+      duration,
+      ease,
+    });
+  }
+
+  public paused(paused: boolean) {
+    this.isPaused = paused;
+  }
+
+  public dispose() {
+    this.resizeObserver?.disconnect();
+    window.removeEventListener('scroll', this.handleScroll);
+    window.removeEventListener('focusin', this.handleFocusIn);
+    if (this.tickerRafId != null) {
+      cancelAnimationFrame(this.tickerRafId);
+    }
+    this.cleanupFn?.();
+    Object.assign(this.wrapper.style, {
+      position: '',
+      width: '',
+      height: '',
+      top: '',
+      left: '',
+    });
+    this.content.style.removeProperty('translate');
+  }
+}

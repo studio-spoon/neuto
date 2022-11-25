@@ -8,5 +8,13 @@ export default defineConfig({
       name: 'Neuto',
       fileName: 'neuto',
     },
+    rollupOptions: {
+      external: ['gsap'],
+      output: {
+        globals: {
+          gsap: 'gsap',
+        },
+      },
+    },
   },
 });
