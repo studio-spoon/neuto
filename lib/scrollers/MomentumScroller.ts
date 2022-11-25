@@ -13,6 +13,7 @@ export type MomentumScrollerOptions = {
   wrapper?: Element | string | null;
   content?: Element | string | null;
   lerpIntencity?: number;
+  disableAutoUpdateLayout?: boolean;
 };
 
 export class MomentumScroller
@@ -34,6 +35,7 @@ export class MomentumScroller
     wrapper = document.querySelector('.neuto-wrapper'),
     content = document.querySelector('.neuto-content'),
     lerpIntencity = 0.1,
+    disableAutoUpdateLayout = false,
   }: MomentumScrollerOptions = {}) {
     super();
 
@@ -41,6 +43,9 @@ export class MomentumScroller
     this.wrapper = findContainerElement(wrapper);
     this.content = findContainerElement(content);
     this.init();
+    if (!disableAutoUpdateLayout) {
+      this.initAutoUpdateLayout();
+    }
   }
 
   private init() {
@@ -52,22 +57,20 @@ export class MomentumScroller
       left: 0,
     });
 
-    this.resizeObserver = this.createResizeObserver();
-    this.resizeObserver.observe(this.content);
-
     this.tick(this.elapsed);
     window.addEventListener('focusin', this.handleFocusIn);
     window.addEventListener('scroll', this.handleScroll);
   }
 
-  private createResizeObserver(): ResizeObserver {
-    return new ResizeObserver((entries) => {
+  private initAutoUpdateLayout() {
+    this.resizeObserver = new ResizeObserver((entries) => {
       entries.forEach((entry) => {
         const { top, height } = entry.target.getBoundingClientRect();
         const offsetY = this.scrollY + top;
         document.body.style.height = `${Math.ceil(offsetY + height)}px`;
       });
     });
+    this.resizeObserver.observe(this.content);
   }
 
   private handleScroll = () => {
