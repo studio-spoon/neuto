@@ -9,14 +9,9 @@ import {
 
 const delta60 = 16;
 
-export type Adaptor = (
-  momentumScroller: MomentumScroller,
-) => (() => void) | void;
-
 export type MomentumScrollerOptions = {
   wrapper?: Element | string | null;
   content?: Element | string | null;
-  adaptors?: Adaptor[];
   lerpIntencity?: number;
 };
 
@@ -33,14 +28,12 @@ export class MomentumScroller
   public readonly wrapper: HTMLElement;
   public readonly content: HTMLElement;
   public isPaused = false;
-  private cleanupFns?: (() => void)[];
   private lerpIntencity: number;
 
   constructor({
     wrapper = document.querySelector('.neuto-wrapper'),
     content = document.querySelector('.neuto-content'),
     lerpIntencity = 0.1,
-    adaptors,
   }: MomentumScrollerOptions = {}) {
     super();
 
@@ -48,9 +41,6 @@ export class MomentumScroller
     this.wrapper = findContainerElement(wrapper);
     this.content = findContainerElement(content);
     this.init();
-    this.cleanupFns = adaptors
-      ?.map((adaptorFn) => adaptorFn(this))
-      .filter((cleanupFn): cleanupFn is () => void => !cleanupFn);
   }
 
   private init() {
@@ -171,7 +161,6 @@ export class MomentumScroller
     if (this.tickerRafId != null) {
       cancelAnimationFrame(this.tickerRafId);
     }
-    this.cleanupFns?.forEach((cleanupFn) => cleanupFn());
     Object.assign(this.wrapper.style, {
       position: '',
       width: '',

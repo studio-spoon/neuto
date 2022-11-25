@@ -8,4 +8,4 @@ http://opensource.org/licenses/mit-license.php
 */
 
 export { Neuto, type NeutoOptions, type NeutoScrollEvent } from './Neuto';
-export { scrollTriggerAdaptor } from './adaptors/scrollTriggerAdaptor';
+export { withScrollTrigger } from './withScrollTrigger';

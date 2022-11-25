@@ -11,7 +11,7 @@ export type NeutoOptions = MomentumScrollerOptions;
 
 export class Neuto implements Omit<Scroller, 'dispatchEvent'> {
   private readonly scroller: Scroller;
-  constructor(options: NeutoOptions) {
+  constructor(options?: NeutoOptions) {
     this.scroller = isTouchOnly()
       ? new NormalScroller()
       : new MomentumScroller(options);
@@ -23,6 +23,10 @@ export class Neuto implements Omit<Scroller, 'dispatchEvent'> {
 
   public get isPaused(): boolean {
     return this.scroller.isPaused;
+  }
+
+  public get _internalScroller() {
+    return this.scroller;
   }
 
   public dispose() {
