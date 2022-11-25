@@ -1,19 +1,29 @@
 import { easeOutCubic } from '../eases';
 import { findContainerElement, lerp } from '../utils';
-import { animateScrolling, Scroller, ScrollerEventTarget, ScrollToOptions } from './Scroller';
+import {
+  animateScrolling,
+  Scroller,
+  ScrollerEventTarget,
+  ScrollToOptions,
+} from './Scroller';
 
 const delta60 = 16;
 
-export type Adaptor = (momentumScroller: MomentumScroller) => (() => void) | void;
+export type Adaptor = (
+  momentumScroller: MomentumScroller,
+) => (() => void) | void;
 
 export type MomentumScrollerOptions = {
   wrapper?: Element | string | null;
   content?: Element | string | null;
-  adaptor?: Adaptor;
+  adaptors?: Adaptor[];
   lerpIntencity?: number;
 };
 
-export class MomentumScroller extends (EventTarget as ScrollerEventTarget) implements Scroller {
+export class MomentumScroller
+  extends (EventTarget as ScrollerEventTarget)
+  implements Scroller
+{
   public scrollY = window.scrollY;
   private nativeScrollY = window.scrollY;
   private tickerRafId?: number;
@@ -23,14 +33,14 @@ export class MomentumScroller extends (EventTarget as ScrollerEventTarget) imple
   public readonly wrapper: HTMLElement;
   public readonly content: HTMLElement;
   public isPaused = false;
-  private cleanupFn?: (() => void) | void;
+  private cleanupFns?: (() => void)[];
   private lerpIntencity: number;
 
   constructor({
     wrapper = document.querySelector('.neuto-wrapper'),
     content = document.querySelector('.neuto-content'),
     lerpIntencity = 0.1,
-    adaptor,
+    adaptors,
   }: MomentumScrollerOptions = {}) {
     super();
 
@@ -38,7 +48,9 @@ export class MomentumScroller extends (EventTarget as ScrollerEventTarget) imple
     this.wrapper = findContainerElement(wrapper);
     this.content = findContainerElement(content);
     this.init();
-    this.cleanupFn = adaptor?.(this);
+    this.cleanupFns = adaptors
+      ?.map((adaptorFn) => adaptorFn(this))
+      .filter((cleanupFn): cleanupFn is () => void => !cleanupFn);
   }
 
   private init() {
@@ -98,7 +110,8 @@ export class MomentumScroller extends (EventTarget as ScrollerEventTarget) imple
 
     const oldScrollY = this.scrollY;
     const ratio = 1 - Math.pow(1 - this.lerpIntencity, this.delta / delta60);
-    this.scrollY = Math.floor(lerp(this.scrollY, this.nativeScrollY, ratio) * 100) / 100;
+    this.scrollY =
+      Math.floor(lerp(this.scrollY, this.nativeScrollY, ratio) * 100) / 100;
 
     if (Math.abs(this.scrollY - this.nativeScrollY) < 0.5) {
       this.scrollY = this.nativeScrollY;
@@ -120,7 +133,10 @@ export class MomentumScroller extends (EventTarget as ScrollerEventTarget) imple
 
   public scrollTo(value: number): number;
   public scrollTo(value: number, options?: ScrollToOptions): Promise<void>;
-  public scrollTo(value: number, { duration = 0, ease = easeOutCubic }: ScrollToOptions = {}) {
+  public scrollTo(
+    value: number,
+    { duration = 0, ease = easeOutCubic }: ScrollToOptions = {},
+  ) {
     const destination = Math.max(value, 0);
     if (duration === 0) {
       window.scrollTo({
@@ -155,7 +171,7 @@ export class MomentumScroller extends (EventTarget as ScrollerEventTarget) imple
     if (this.tickerRafId != null) {
       cancelAnimationFrame(this.tickerRafId);
     }
-    this.cleanupFn?.();
+    this.cleanupFns?.forEach((cleanupFn) => cleanupFn());
     Object.assign(this.wrapper.style, {
       position: '',
       width: '',
