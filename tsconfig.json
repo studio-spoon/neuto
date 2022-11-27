@@ -18,5 +18,5 @@
     "declarationMap": true,
     "declarationDir": "./types"
   },
-  "include": ["lib"]
+  "include": ["lib", "examples"]
 }

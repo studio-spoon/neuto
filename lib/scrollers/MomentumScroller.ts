@@ -8,6 +8,14 @@ import {
 } from './Scroller';
 
 const delta60 = 16;
+const activeWrapperStyle = {
+  position: 'fixed',
+  width: '100%',
+  height: '100%',
+  top: 0,
+  left: 0,
+  overflow: 'hidden',
+} as const;
 
 export type MomentumScrollerOptions = {
   wrapper?: Element | string | null;
@@ -30,6 +38,9 @@ export class MomentumScroller
   public readonly content: HTMLElement;
   public isPaused = false;
   private lerpIntencity: number;
+  private isTranslating = false;
+  private isStyled = false;
+  private height = this.calcDocumentHeight();
 
   constructor({
     wrapper = document.querySelector('.neuto-wrapper'),
@@ -47,27 +58,42 @@ export class MomentumScroller
   }
 
   private init() {
-    Object.assign(this.wrapper.style, {
-      position: 'fixed',
-      width: '100%',
-      height: '100%',
-      top: 0,
-      left: 0,
-    });
-
     this.tick(this.elapsed);
     window.addEventListener('focusin', this.handleFocusIn);
     window.addEventListener('scroll', this.handleScroll);
   }
 
+  private activateStyles() {
+    if (this.isStyled) {
+      return;
+    }
+    this.isStyled = true;
+    document.body.style.height = `${this.height}px`;
+    Object.assign(this.wrapper.style, activeWrapperStyle);
+  }
+
+  private deactivateStyles() {
+    if (!this.isStyled) {
+      return;
+    }
+    this.isStyled = false;
+    document.body.style.removeProperty('height');
+    Object.keys(activeWrapperStyle).forEach((property) => {
+      this.wrapper.style.removeProperty(property);
+    });
+    this.content.style.removeProperty('translate');
+  }
+
+  private calcDocumentHeight() {
+    const { top, height } = document.body.getBoundingClientRect();
+    const offsetY = this.scrollY + top;
+    return offsetY + height;
+  }
+
   private initAutoUpdateLayout(debounceWait: number) {
     this.resizeObserver = new ResizeObserver(
-      debounce((entries) => {
-        entries.forEach((entry) => {
-          const { top, height } = entry.target.getBoundingClientRect();
-          const offsetY = this.scrollY + top;
-          document.body.style.height = `${offsetY + height}px`;
-        });
+      debounce(() => {
+        this.height = this.calcDocumentHeight();
       }, debounceWait),
     );
     this.resizeObserver.observe(this.content);
@@ -112,8 +138,13 @@ export class MomentumScroller
       this.scrollY = this.nativeScrollY;
     }
 
-    if (oldScrollY !== this.scrollY) {
+    this.isTranslating = oldScrollY !== this.scrollY;
+
+    if (this.isTranslating) {
+      this.activateStyles();
       this.translate(this.scrollY);
+    } else {
+      this.deactivateStyles();
     }
 
     this.tickerRafId = requestAnimationFrame((time) => {

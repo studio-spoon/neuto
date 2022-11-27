@@ -2,6 +2,13 @@
 
 A light weight, zero dependency, simple momentum scrolling library.
 
+## Accessibility
+
+- Keyboard navigation
+- History back / forward by trackpad or mouse gestures
+- Find on page (partially supported)
+- Native scrollbar
+
 ## Usage
 
 ### quick start
