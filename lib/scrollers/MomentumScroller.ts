@@ -14,7 +14,6 @@ const activeWrapperStyle = {
   height: '100%',
   top: 0,
   left: 0,
-  overflow: 'hidden',
 } as const;
 
 export type MomentumScrollerOptions = {
@@ -58,9 +57,29 @@ export class MomentumScroller
   }
 
   private init() {
+    this.forceStyles();
     this.tick(this.elapsed);
     window.addEventListener('focusin', this.handleFocusIn);
     window.addEventListener('scroll', this.handleScroll);
+  }
+
+  private forceStyles() {
+    /**
+     * NOTE:
+     *
+     * Enforce `overflow: hidden` with important because
+     * the `overflow` property of the wrapper element is
+     * rewritten to `scroll` by ScrollTrigger.
+     */
+    const style = document.createElement('style');
+    document.head.appendChild(style);
+    const internalClassName = 'neuto-wrapper';
+    this.wrapper.classList.add(internalClassName);
+    const styleSheet = style.sheet;
+    styleSheet?.insertRule(
+      `.${internalClassName} { overflow: hidden !important; }`,
+      0,
+    );
   }
 
   private activateStyles() {
@@ -142,7 +161,8 @@ export class MomentumScroller
 
     if (this.isTranslating) {
       this.activateStyles();
-      this.translate(this.scrollY);
+      this.content.style.translate = `0 -${this.scrollY}px`;
+      this.dispatchEvent(new CustomEvent('scroll', { detail: this.scrollY }));
     } else {
       this.deactivateStyles();
     }
@@ -150,11 +170,6 @@ export class MomentumScroller
     this.tickerRafId = requestAnimationFrame((time) => {
       this.tick(time);
     });
-  }
-
-  private translate(value: number) {
-    this.content.style.translate = `0 -${value}px`;
-    this.dispatchEvent(new CustomEvent('scroll', { detail: value }));
   }
 
   public scrollTo(value: number): number;
@@ -170,7 +185,6 @@ export class MomentumScroller
       });
       if (this.scrollY !== destination) {
         this.scrollY = destination;
-        this.translate(destination);
       }
       return destination;
     }
@@ -205,5 +219,6 @@ export class MomentumScroller
       left: '',
     });
     this.content.style.removeProperty('translate');
+    // this.wrapperStyleProxy.revoke();
   }
 }
