@@ -31,7 +31,7 @@
     "typescript": "^4.6.4",
     "vite": "^3.2.3"
   },
-  "peerDependencies": {
+  "optionalDependencies": {
     "gsap": "^3.11.3"
   }
 }
