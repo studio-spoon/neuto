@@ -8,11 +8,18 @@ import {
 } from './Scroller';
 
 const delta60 = 16;
+const activeWrapperStyle = {
+  position: 'fixed',
+  width: '100%',
+  height: '100%',
+  top: 0,
+  left: 0,
+} as const;
 
 export type MomentumScrollerOptions = {
   wrapper?: Element | string | null;
   content?: Element | string | null;
-  lerpIntencity?: number;
+  intencity?: number;
   autoUpdateLayoutDebounceWait?: number;
 };
 
@@ -29,17 +36,20 @@ export class MomentumScroller
   public readonly wrapper: HTMLElement;
   public readonly content: HTMLElement;
   public isPaused = false;
-  private lerpIntencity: number;
+  private intencity: number;
+  private isTranslating = false;
+  private isStyled = false;
+  private height = this.calcDocumentHeight();
 
   constructor({
     wrapper = document.querySelector('.neuto-wrapper'),
     content = document.querySelector('.neuto-content'),
-    lerpIntencity = 0.1,
+    intencity = 0.1,
     autoUpdateLayoutDebounceWait = 200,
   }: MomentumScrollerOptions = {}) {
     super();
 
-    this.lerpIntencity = lerpIntencity;
+    this.intencity = intencity;
     this.wrapper = findContainerElement(wrapper);
     this.content = findContainerElement(content);
     this.init();
@@ -47,27 +57,62 @@ export class MomentumScroller
   }
 
   private init() {
-    Object.assign(this.wrapper.style, {
-      position: 'fixed',
-      width: '100%',
-      height: '100%',
-      top: 0,
-      left: 0,
-    });
-
+    this.forceStyles();
     this.tick(this.elapsed);
     window.addEventListener('focusin', this.handleFocusIn);
     window.addEventListener('scroll', this.handleScroll);
   }
 
+  private forceStyles() {
+    /**
+     * NOTE:
+     *
+     * Enforce `overflow: hidden` with important because
+     * the `overflow` property of the wrapper element is
+     * rewritten to `scroll` by ScrollTrigger.
+     */
+    const style = document.createElement('style');
+    document.head.appendChild(style);
+    const internalClassName = 'neuto-wrapper';
+    this.wrapper.classList.add(internalClassName);
+    const styleSheet = style.sheet;
+    styleSheet?.insertRule(
+      `.${internalClassName} { overflow: hidden !important; }`,
+      0,
+    );
+  }
+
+  private activateStyles() {
+    if (this.isStyled) {
+      return;
+    }
+    this.isStyled = true;
+    document.body.style.height = `${this.height}px`;
+    Object.assign(this.wrapper.style, activeWrapperStyle);
+  }
+
+  private deactivateStyles() {
+    if (!this.isStyled) {
+      return;
+    }
+    this.isStyled = false;
+    document.body.style.removeProperty('height');
+    Object.keys(activeWrapperStyle).forEach((property) => {
+      this.wrapper.style.removeProperty(property);
+    });
+    this.content.style.removeProperty('translate');
+  }
+
+  private calcDocumentHeight() {
+    const { top, height } = document.body.getBoundingClientRect();
+    const offsetY = this.scrollY + top;
+    return offsetY + height;
+  }
+
   private initAutoUpdateLayout(debounceWait: number) {
     this.resizeObserver = new ResizeObserver(
-      debounce((entries) => {
-        entries.forEach((entry) => {
-          const { top, height } = entry.target.getBoundingClientRect();
-          const offsetY = this.scrollY + top;
-          document.body.style.height = `${offsetY + height}px`;
-        });
+      debounce(() => {
+        this.height = this.calcDocumentHeight();
       }, debounceWait),
     );
     this.resizeObserver.observe(this.content);
@@ -104,7 +149,7 @@ export class MomentumScroller
     this.elapsed = time;
 
     const oldScrollY = this.scrollY;
-    const ratio = 1 - Math.pow(1 - this.lerpIntencity, this.delta / delta60);
+    const ratio = 1 - Math.pow(1 - this.intencity, this.delta / delta60);
     this.scrollY =
       Math.floor(lerp(this.scrollY, this.nativeScrollY, ratio) * 100) / 100;
 
@@ -112,18 +157,19 @@ export class MomentumScroller
       this.scrollY = this.nativeScrollY;
     }
 
-    if (oldScrollY !== this.scrollY) {
-      this.translate(this.scrollY);
+    this.isTranslating = oldScrollY !== this.scrollY;
+
+    if (this.isTranslating) {
+      this.activateStyles();
+      this.content.style.translate = `0 -${this.scrollY}px`;
+      this.dispatchEvent(new CustomEvent('scroll', { detail: this.scrollY }));
+    } else {
+      this.deactivateStyles();
     }
 
     this.tickerRafId = requestAnimationFrame((time) => {
       this.tick(time);
     });
-  }
-
-  private translate(value: number) {
-    this.content.style.translate = `0 -${value}px`;
-    this.dispatchEvent(new CustomEvent('scroll', { detail: value }));
   }
 
   public scrollTo(value: number): number;
@@ -139,7 +185,6 @@ export class MomentumScroller
       });
       if (this.scrollY !== destination) {
         this.scrollY = destination;
-        this.translate(destination);
       }
       return destination;
     }
@@ -174,5 +219,6 @@ export class MomentumScroller
       left: '',
     });
     this.content.style.removeProperty('translate');
+    // this.wrapperStyleProxy.revoke();
   }
 }
