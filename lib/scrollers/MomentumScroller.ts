@@ -19,7 +19,7 @@ const activeWrapperStyle = {
 export type MomentumScrollerOptions = {
   wrapper?: Element | string | null;
   content?: Element | string | null;
-  lerpIntencity?: number;
+  intencity?: number;
   autoUpdateLayoutDebounceWait?: number;
 };
 
@@ -36,7 +36,7 @@ export class MomentumScroller
   public readonly wrapper: HTMLElement;
   public readonly content: HTMLElement;
   public isPaused = false;
-  private lerpIntencity: number;
+  private intencity: number;
   private isTranslating = false;
   private isStyled = false;
   private height = this.calcDocumentHeight();
@@ -44,12 +44,12 @@ export class MomentumScroller
   constructor({
     wrapper = document.querySelector('.neuto-wrapper'),
     content = document.querySelector('.neuto-content'),
-    lerpIntencity = 0.1,
+    intencity = 0.1,
     autoUpdateLayoutDebounceWait = 200,
   }: MomentumScrollerOptions = {}) {
     super();
 
-    this.lerpIntencity = lerpIntencity;
+    this.intencity = intencity;
     this.wrapper = findContainerElement(wrapper);
     this.content = findContainerElement(content);
     this.init();
@@ -149,7 +149,7 @@ export class MomentumScroller
     this.elapsed = time;
 
     const oldScrollY = this.scrollY;
-    const ratio = 1 - Math.pow(1 - this.lerpIntencity, this.delta / delta60);
+    const ratio = 1 - Math.pow(1 - this.intencity, this.delta / delta60);
     this.scrollY =
       Math.floor(lerp(this.scrollY, this.nativeScrollY, ratio) * 100) / 100;
 
