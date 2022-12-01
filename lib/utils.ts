@@ -33,3 +33,27 @@ export function debounce<T extends unknown[], U>(
     timerId = window.setTimeout(() => fn(...args), wait);
   };
 }
+
+if (import.meta.vitest) {
+  const { test, expect, vi, beforeEach, afterEach } = import.meta.vitest;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('debounce function', () => {
+    const fn = vi.fn();
+    const delay = 100;
+    const debouncedFn = debounce(fn, delay);
+    for (let i = 0; i < 10; i++) {
+      debouncedFn();
+    }
+    expect(fn).not.toBeCalled();
+    vi.advanceTimersByTime(delay);
+    expect(fn).toBeCalledTimes(1);
+  });
+}
