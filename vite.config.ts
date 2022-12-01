@@ -1,5 +1,5 @@
 import { resolve } from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   build: {
@@ -16,5 +16,9 @@ export default defineConfig({
         },
       },
     },
+  },
+  test: {
+    includeSource: ['src/**/*.{ts,tsx}'],
+    environment: 'jsdom',
   },
 });
