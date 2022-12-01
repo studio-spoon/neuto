@@ -13,6 +13,12 @@ A light weight, zero dependency, simple momentum scrolling library.
 
 **NOTICE: Momentum scrolling is not enabled on touch-only devices.**
 
+## Installation
+
+```
+npm i neuto
+```
+
 ## Usage
 
 ### quick start
