@@ -38,6 +38,7 @@ export class MomentumScroller
   public isPaused = false;
   private intencity: number;
   private isTranslating = false;
+  private isSmoothScrolling = false;
   private isStyled = false;
   private height = this.calcDocumentHeight();
 
@@ -157,7 +158,7 @@ export class MomentumScroller
       this.scrollY = this.nativeScrollY;
     }
 
-    this.isTranslating = oldScrollY !== this.scrollY;
+    this.isTranslating = this.isSmoothScrolling || oldScrollY !== this.scrollY;
 
     if (this.isTranslating) {
       this.activateStyles();
@@ -191,12 +192,16 @@ export class MomentumScroller
 
     const from = this.scrollY;
     const delta = destination - from;
+    this.isSmoothScrolling = true;
     return animateScrolling({
       onProgress: (progress) => {
         this.scrollTo(from + delta * progress);
       },
       duration,
       ease,
+      onCompleteOrStop: () => {
+        this.isSmoothScrolling = false;
+      },
     });
   }
 
@@ -219,6 +224,5 @@ export class MomentumScroller
       left: '',
     });
     this.content.style.removeProperty('translate');
-    // this.wrapperStyleProxy.revoke();
   }
 }

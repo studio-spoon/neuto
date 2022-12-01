@@ -1,7 +1,15 @@
 import { easeOutCubic } from '../eases';
-import { animateScrolling, Scroller, ScrollerEventTarget, ScrollToOptions } from './Scroller';
+import {
+  animateScrolling,
+  Scroller,
+  ScrollerEventTarget,
+  ScrollToOptions,
+} from './Scroller';
 
-export class NormalScroller extends (EventTarget as ScrollerEventTarget) implements Scroller {
+export class NormalScroller
+  extends (EventTarget as ScrollerEventTarget)
+  implements Scroller
+{
   public scrollY = window.scrollY;
   public isPaused = false;
   constructor() {
@@ -23,7 +31,10 @@ export class NormalScroller extends (EventTarget as ScrollerEventTarget) impleme
 
   public scrollTo(value: number): void;
   public scrollTo(value: number, options?: ScrollToOptions): Promise<void>;
-  public scrollTo(value: number, { duration = 0, ease = easeOutCubic }: ScrollToOptions = {}) {
+  public scrollTo(
+    value: number,
+    { duration = 0, ease = easeOutCubic }: ScrollToOptions = {},
+  ) {
     if (duration === 0) {
       window.scrollTo({
         top: value,

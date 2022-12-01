@@ -1,9 +1,9 @@
 {
   "name": "neuto",
-  "version": "0.0.2",
+  "version": "0.0.1",
   "description": "A light weight, zero dependency, simple momentum scrolling library.",
   "type": "module",
-  "author": "Ryohei Endo <r-endo@studio-spoon.co.jp>",
+  "author": "Ryohei Endo <dev.ryohei.endo@gmail.com>",
   "license": "MIT",
   "main": "./dist/neuto.umd.cjs",
   "module": "./dist/neuto.js",
@@ -21,15 +21,19 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "test": "vitest",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
+    "@testing-library/dom": "^8.19.0",
     "@typescript-eslint/eslint-plugin": "^5.44.0",
     "@typescript-eslint/parser": "^5.44.0",
     "eslint": "^8.28.0",
+    "jsdom": "^20.0.3",
     "prettier": "^2.8.0",
     "typescript": "^4.6.4",
-    "vite": "^3.2.3"
+    "vite": "^3.2.3",
+    "vitest": "^0.25.3"
   },
   "optionalDependencies": {
     "gsap": "^3.11.3"

@@ -29,16 +29,19 @@ export async function animateScrolling({
   onProgress,
   duration = 500,
   ease = easeOutCubic,
+  onCompleteOrStop,
 }: {
   duration?: number;
   ease?: (p: number) => number;
   onProgress: (progress: number) => void;
+  onCompleteOrStop?: () => void;
 }) {
   const animation = new Animation(onProgress);
   const eventTypesForStop = ['wheel', 'mousedown', 'touchstart'];
   const stop = () => {
     removeListeners();
     animation.stop();
+    onCompleteOrStop?.();
   };
   const addListeners = () => {
     eventTypesForStop.forEach((eventType) => {
@@ -54,4 +57,5 @@ export async function animateScrolling({
   addListeners();
   await animation.play({ duration, ease });
   removeListeners();
+  onCompleteOrStop?.();
 }
