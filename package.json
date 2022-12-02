@@ -22,7 +22,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "test": "vitest",
-    "prepublishOnly": "npm run build"
+    "lint": "eslint lib",
+    "format": "prettier --write lib",
+    "prepublishOnly": "eslint lib && prettier --check lib && vitest run && npm run build"
   },
   "devDependencies": {
     "@testing-library/dom": "^8.19.0",

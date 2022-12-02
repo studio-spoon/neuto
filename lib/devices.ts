@@ -1,1 +1,2 @@
-export const isTouchOnly = () => !window.matchMedia('(pointer: fine) and (hover: hover)').matches;
+export const isTouchOnly = () =>
+  !window.matchMedia('(pointer: fine) and (hover: hover)').matches;
