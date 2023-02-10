@@ -41,7 +41,7 @@ export class MomentumScroller
   private isSmoothScrolling = false;
   private isStyled = false;
   private height: number;
-  private isDisabled = false;
+  public isDisabled = false;
 
   constructor({
     wrapper = document.querySelector('.neuto-wrapper'),

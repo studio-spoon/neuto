@@ -37,12 +37,16 @@ export function withScrollTrigger(
     scroller: scroller.wrapper,
   });
 
+  let isEnabledBeforeRefresh = true;
   const handleRefreshInit = () => {
+    isEnabledBeforeRefresh = !scroller.isDisabled;
     scroller.disable();
   };
   ScrollTrigger.addEventListener('refreshInit', handleRefreshInit);
   const handleRefresh = () => {
-    scroller.enable();
+    if (isEnabledBeforeRefresh) {
+      scroller.enable();
+    }
   };
   ScrollTrigger.addEventListener('refresh', handleRefresh);
 
