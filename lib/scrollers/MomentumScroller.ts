@@ -40,7 +40,8 @@ export class MomentumScroller
   private isTranslating = false;
   private isSmoothScrolling = false;
   private isStyled = false;
-  private height = this.calcDocumentHeight();
+  private height: number;
+  public isDisabled = false;
 
   constructor({
     wrapper = document.querySelector('.neuto-wrapper'),
@@ -53,6 +54,7 @@ export class MomentumScroller
     this.intencity = intencity;
     this.wrapper = findContainerElement(wrapper);
     this.content = findContainerElement(content);
+    this.height = this.content.clientHeight;
     this.init();
     this.initAutoUpdateLayout(autoUpdateLayoutDebounceWait);
   }
@@ -104,16 +106,10 @@ export class MomentumScroller
     this.content.style.removeProperty('translate');
   }
 
-  private calcDocumentHeight() {
-    const { top, height } = document.body.getBoundingClientRect();
-    const offsetY = this.scrollY + top;
-    return offsetY + height;
-  }
-
   private initAutoUpdateLayout(debounceWait: number) {
     this.resizeObserver = new ResizeObserver(
       debounce(() => {
-        this.height = this.calcDocumentHeight();
+        this.height = this.content.clientHeight;
       }, debounceWait),
     );
     this.resizeObserver.observe(this.content);
@@ -128,6 +124,10 @@ export class MomentumScroller
     }
 
     this.nativeScrollY = window.scrollY;
+
+    if (this.isDisabled) {
+      this.scrollY = this.nativeScrollY;
+    }
   };
 
   private handleFocusIn = (e: FocusEvent) => {
@@ -149,6 +149,16 @@ export class MomentumScroller
     this.delta = time - this.elapsed || delta60;
     this.elapsed = time;
 
+    if (!this.isDisabled) {
+      this.update();
+    }
+
+    this.tickerRafId = requestAnimationFrame((time) => {
+      this.tick(time);
+    });
+  }
+
+  private update() {
     const oldScrollY = this.scrollY;
     const ratio = 1 - Math.pow(1 - this.intencity, this.delta / delta60);
     this.scrollY =
@@ -167,10 +177,6 @@ export class MomentumScroller
     } else {
       this.deactivateStyles();
     }
-
-    this.tickerRafId = requestAnimationFrame((time) => {
-      this.tick(time);
-    });
   }
 
   public scrollTo(value: number): number;
@@ -184,9 +190,9 @@ export class MomentumScroller
       window.scrollTo({
         top: destination,
       });
-      if (this.scrollY !== destination) {
-        this.scrollY = destination;
-      }
+      this.nativeScrollY = destination;
+      this.scrollY = destination;
+
       return destination;
     }
 
@@ -224,5 +230,17 @@ export class MomentumScroller
       left: '',
     });
     this.content.style.removeProperty('translate');
+  }
+
+  public disable() {
+    this.isDisabled = true;
+    this.scrollY = this.nativeScrollY;
+    this.isTranslating = false;
+    this.deactivateStyles();
+  }
+
+  public enable() {
+    this.isDisabled = false;
+    this.scrollY = this.nativeScrollY;
   }
 }

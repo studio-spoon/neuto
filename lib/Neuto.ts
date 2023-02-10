@@ -63,4 +63,11 @@ export class Neuto implements Omit<Scroller, 'dispatchEvent'> {
   public paused(paused: boolean): void {
     this.scroller.paused(paused);
   }
+  public disable() {
+    this.scroller.disable?.();
+  }
+
+  public enable() {
+    this.scroller.enable?.();
+  }
 }
