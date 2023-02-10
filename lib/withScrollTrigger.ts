@@ -37,15 +37,12 @@ export function withScrollTrigger(
     scroller: scroller.wrapper,
   });
 
-  let tmp = 0;
   const handleRefreshInit = () => {
-    tmp = scroller.scrollY;
-    scroller.scrollTo(0);
+    scroller.disable();
   };
   ScrollTrigger.addEventListener('refreshInit', handleRefreshInit);
   const handleRefresh = () => {
-    scroller.scrollTo(tmp);
-    tmp = 0;
+    scroller.enable();
   };
   ScrollTrigger.addEventListener('refresh', handleRefresh);
 

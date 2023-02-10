@@ -23,6 +23,8 @@ export interface Scroller extends IScrollerEventTarget {
   scrollTo(value: number, options?: ScrollToOptions): Promise<void>;
   paused(paused: boolean): void;
   dispose(): void;
+  disable?(): void;
+  enable?(): void;
 }
 
 export async function animateScrolling({
