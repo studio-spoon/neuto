@@ -1,6 +1,6 @@
 {
   "name": "neuto",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A light weight, zero dependency, simple momentum scrolling library.",
   "type": "module",
   "author": "Ryohei Endo <dev.ryohei.endo@gmail.com>",
